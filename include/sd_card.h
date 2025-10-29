@@ -2,6 +2,7 @@
 #define SDCARD_H
 
 #include <Arduino.h>
+#include <WiFi.h>
 #include "FS.h"
 #include "SD_MMC.h"
 #include <config.h>
@@ -134,6 +135,7 @@ void startwifi()
 
 	}
 
+} // END startwifi
 
 
 

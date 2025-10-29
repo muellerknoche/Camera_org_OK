@@ -9,6 +9,9 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <ArduinoWebsockets.h>
+
+
+#define DEBUG
 //----------------------------------------
 
 //----------------------------------------Defines the camera GPIO (“AI Thinker” camera model).
@@ -36,8 +39,6 @@ const uint16_t websockets_server_port = 8888;
 using namespace websockets;
 WebsocketsClient client;
 
-
-
 //________________________________________________________________________________ VOID SETUP()
 void setup()
 {
@@ -47,7 +48,7 @@ void setup()
 	while (!Serial) { delay(10); }					// let Serial come up
 
 	Serial.println("START SETUP");
-
+	startwifi();
 
   //----------------------------------------Set up the ESP32-CAM camera configuration.
   Serial.println();
@@ -164,8 +165,9 @@ void setup()
   //---------------------------------------- 
   Serial.println();
   Serial.println("-------------");
+
   Serial.println("Connecting sockets");
-  while(!client.connect(websockets_server_host, websockets_server_port, "/")){
+  while(!client.connect(gateway, websockets_server_port, "/")){
     Serial.print(".");
     delay(500);
   }
