@@ -1,5 +1,11 @@
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> 04_ESP32-CAM_to_ESP32_--_Client_-_ESP32-CAM
-//----------------------------------------Including Libraries.
+// nochmal mit ArduinoWebsockets
+// SD Card einbauen
+
+#include <Arduino.h>
+#include "FS.h"
+#include "SD_MMC.h"
+#include <sd_card.h>
+#include <config.h>
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <ArduinoWebsockets.h>
@@ -25,10 +31,6 @@
 //----------------------------------------
 
 // ESP32 TFT LCD (Server) Access Point.
-const char* ssid = "ESP32CAM_to_ESP32"; //--> access point name.
-const char* password = "myesp32server"; //--> access point password.
-
-const char* websockets_server_host = "192.168.1.1"; //--> Use the IP address in the "local_ip" variable in the ESP32 TFT LCD (server) program code.
 const uint16_t websockets_server_port = 8888;
 
 using namespace websockets;
@@ -37,13 +39,15 @@ WebsocketsClient client;
 
 
 //________________________________________________________________________________ VOID SETUP()
-void setup() {
-  // put your setup code here, to run once:
+void setup()
+{
+  	pinMode(4, OUTPUT);								// CAM flashlight off
+	digitalWrite(4, LOW);
+	Serial.begin(115200);
+	while (!Serial) { delay(10); }					// let Serial come up
 
-  Serial.begin(9600);
-  Serial.setDebugOutput(true);
-  Serial.println();
-  delay(500);
+	Serial.println("START SETUP");
+
 
   //----------------------------------------Set up the ESP32-CAM camera configuration.
   Serial.println();
