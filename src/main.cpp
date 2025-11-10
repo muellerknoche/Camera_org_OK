@@ -1,7 +1,7 @@
 // nochmal mit ArduinoWebsockets
 // SD Card einbauen
 /**
- * @date 02.1.2025 mk SD Caed ist drin via sd_card.h seit ?
+ * @date 09.11.2025 mk Version 1.0.0
  */
 
 #include <Arduino.h>
@@ -65,9 +65,6 @@ void onEventsCallback(WebsocketsEvent event, String data) {
 //________________________________________________________________________________ VOID SETUP()
 void setup()
 {
-
-
-
   	pinMode(4, OUTPUT);								// CAM flashlight off
 	digitalWrite(4, LOW);
 	Serial.begin(115200);
@@ -129,23 +126,7 @@ Serial.println("Set the camera ESP32-CAM...");
   	Serial.println("ESP32-CAM camera initialization successful.");
 
 
-// Ist das nicht schon in der sd_card.h scheint so ja
-// erst mal hier kommentiert
-
-// 	//----------------------------------------Set Wifi to STA mode.
-//   	Serial.println("WIFI mode : STA");
-//   	WiFi.mode(WIFI_STA);
-//   	Serial.println("-------------");
-//   	delay(500);
-//   	//---------------------------------------- 
-
-//   Serial.println("-------------Connect to WiFi");
-//   Serial.print("Connecting to ");  Serial.println(ssid);
-
-//   WiFi.disconnect(true);
-  
-//   WiFi.begin(ssid, password);
-  
+ 
 // bis Zeile ESP.restart() +1 ist vom Original
 	//:::::::::::::::::: The process of connecting ESP32-CAM with WiFi Hotspot / WiFi Router / ESP32 TFT LCD WiFI Access Point (Server).
 	// The process timeout of connecting ESP32-CAM with WiFi Hotspot / WiFi Router is 20 seconds.
@@ -185,16 +166,34 @@ Serial.println("Set the camera ESP32-CAM...");
 // WebSocket-Client setup
     client.onEvent(onEventsCallback);
 
-
+int i = 0;
 // MK Mit Schleife	
    	while(!client.connect(gateway, websockets_server_port, "/"))
  	{
-     	Serial.print(".");
-     	delay(500);
+		i++;
+		if (i > 30)						// 15 secinden
+		{
+		
+			digitalWrite(4,HIGH);
+			delay(1000);
+			digitalWrite(4,LOW);
+			delay(100);
+			ESP.restart();
+		}
+	   	Serial.print(".");
+    	delay(500);
    	}
-  	 Serial.println("Socket Connected !"); 
 
-// GROK	client.connect(gateway, websockets_server_port, "/");  // Verbinde zum Server
+	digitalWrite(4,HIGH);
+	delay(50);
+	digitalWrite(4,LOW);
+
+	if (client.available())
+	{
+	  	 Serial.println("Socket Connected !"); 
+	}
+
+// GROK	version client.connect(gateway, websockets_server_port, "/");  // Verbinde zum Server
     // if (client.available()) 
 	// {
     //     Serial.println("WebSocket-Client verbunden!");
