@@ -68,8 +68,8 @@ void setup()
   	pinMode(4, OUTPUT);								// CAM flashlight off
 	digitalWrite(4, LOW);
 	Serial.begin(115200);
-	while (!Serial) { delay(10); }					// let Serial come up
-
+//	while (!Serial) { delay(10); }					// let Serial come up
+	delay(100);
 	Serial.println("START SETUP");
 	startwifi();                      				// in incorrektem sd_card.h
   // holt Daten von SD Card und startet WiFi
