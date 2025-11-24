@@ -15,7 +15,7 @@ String defaultLaenge = "4";
 String ssid;
 String password;
 IPAddress localIP;
-String gateway;				// gateway has the same value than localIP
+IPAddress gateway;				// gateway has the same value than localIP
 IPAddress subnet;
 String pin;
 String laenge;

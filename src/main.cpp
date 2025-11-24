@@ -1,7 +1,10 @@
 // nochmal mit ArduinoWebsockets
 // SD Card einbauen
 /**
+ * @author Rainer Müller-Knoche mk@muekno.de
  * @date 09.11.2025 mk Version 1.0.0
+ * @date 21.11.2025 mk Version 1.1.0
+ * CAM als Websockets Server
  */
 
 #include <Arduino.h>
@@ -37,42 +40,31 @@
 //----------------------------------------
 
 // ESP32 TFT LCD (Server) Access Point.
-const uint16_t websockets_server_port = 8888;
+//const uint16_t websockets_server_port = 8888;
 
 
 
 using namespace websockets;
-WebsocketsClient client;
-unsigned long lastPing = 0;  // Für periodische Pings
-unsigned long lastDisconnect = 0;  // Für Reconnect-Delay
-const unsigned long reconnectDelay = 5000;  // 5 Sekunden warten vor Reconnect
-const unsigned long pingInterval = 30000;  // Ping alle 30 Sekunden
 
-// Event-Callback (global, wie in deinem Code)
-void onEventsCallback(WebsocketsEvent event, String data) {
-    if (event == WebsocketsEvent::ConnectionOpened) {
-        Serial.println("Verbindung geöffnet!");
-    } else if (event == WebsocketsEvent::GotPong) {
-        Serial.println("PONG erhalten – Verbindung lebt!");
-    } else if (event == WebsocketsEvent::ConnectionClosed) {
-        Serial.println("Verbindung tot/getrennt!");
-		ESP.restart();
-        lastDisconnect = millis();  // Starte Reconnect-Timer
-    }
-}
-
-
-//________________________________________________________________________________ VOID SETUP()
+WebsocketsServer server;
 void setup()
 {
   	pinMode(4, OUTPUT);								// CAM flashlight off
 	digitalWrite(4, LOW);
+
 	Serial.begin(115200);
-//	while (!Serial) { delay(10); }					// let Serial come up
+
+//	while (!Serial) { delay(10); }					// let Serial come up loop blocks
+	
 	delay(100);
-	Serial.println("START SETUP");
+  	// holt Daten von SD Card und startet WiFi
 	startwifi();                      				// in incorrektem sd_card.h
-  // holt Daten von SD Card und startet WiFi
+
+	server.listen(8888);
+	Serial.print("Is server live? ");
+  	Serial.println(server.available());
+
+
 
   //----------------------------------------Set up the ESP32-CAM camera configuration.
 Serial.println("Set the camera ESP32-CAM...");
@@ -121,119 +113,64 @@ Serial.println("Set the camera ESP32-CAM...");
     	Serial.println();
     	Serial.println("Restarting the ESP32 CAM.");
     	delay(1000);
-    	ESP.restart();
+    	ESP.restart();			
   	}
   	Serial.println("ESP32-CAM camera initialization successful.");
 
-
- 
-// bis Zeile ESP.restart() +1 ist vom Original
-	//:::::::::::::::::: The process of connecting ESP32-CAM with WiFi Hotspot / WiFi Router / ESP32 TFT LCD WiFI Access Point (Server).
-	// The process timeout of connecting ESP32-CAM with WiFi Hotspot / WiFi Router is 20 seconds.
-	// If within 20 seconds the ESP32-CAM has not been successfully connected to WiFi, the ESP32-CAM will restart.
-	// I made this condition because on my ESP32-CAM, there are times when it seems like it can't connect to WiFi, so it needs to be restarted to be able to connect to WiFi.
-  
-	int connecting_process_timed_out = 20; //--> 20 = 20 seconds.
-  	connecting_process_timed_out = connecting_process_timed_out * 2;
-  	while (WiFi.status() != WL_CONNECTED)
-	{
-    	Serial.print(".");
-    	delay(500);
-    
-    	if(connecting_process_timed_out > 0) connecting_process_timed_out--;
-    	if(connecting_process_timed_out == 0)
-		{
-      		Serial.println();
-      		Serial.println("Failed to connect to WiFi. The ESP32-CAM will be restarted.");
-      		Serial.println("-------------");
-      		delay(1000);
-      		ESP.restart();
-    	}
-  	}
   
   	Serial.print("Successfully connected to : ");  Serial.println(ssid);
   	Serial.print("IP Address : ");  Serial.println(WiFi.localIP());
 
-//   	Serial.println("Connecting sockets");
-//   	while(!client.connect(gateway, websockets_server_port, "/"))
-// 	{
-//     	Serial.print(".");
-//     	delay(500);
-//   	}
-//  	 Serial.println("Socket Connected !"); 
-// 	client.onEvent(onEventsCallback);
-
-// WebSocket-Client setup
-    client.onEvent(onEventsCallback);
-
-int i = 0;
-// MK Mit Schleife	
-   	while(!client.connect(gateway, websockets_server_port, "/"))
- 	{
-		i++;
-		if (i > 30)						// 15 secinden
-		{
-		
-			digitalWrite(4,HIGH);
-			delay(1000);
-			digitalWrite(4,LOW);
-			delay(100);
-			ESP.restart();
-		}
-	   	Serial.print(".");
-    	delay(500);
-   	}
 
 	digitalWrite(4,HIGH);
 	delay(50);
 	digitalWrite(4,LOW);
 
-	if (client.available())
-	{
-	  	 Serial.println("Socket Connected !"); 
-	}
-
-// GROK	version client.connect(gateway, websockets_server_port, "/");  // Verbinde zum Server
-    // if (client.available()) 
-	// {
-    //     Serial.println("WebSocket-Client verbunden!");
-    // //    client.send("Hallo vom ESP32-CAM!");  // Test-Nachricht
-    // } 
-	// else
-	// {
-    //     Serial.println("WebSocket-Verbindung fehlgeschlagen!");
-    // }
 }
 
 void loop()
 {
 
-  	if (client.available())
+	auto client = server.accept();
+	if (client.available())
 	{
-		client.poll();
-    	// === amera captures image.
-    	camera_fb_t *fb = NULL;
-    	esp_err_t res = ESP_OK;
-    	fb = esp_camera_fb_get();
-    	if(!fb)
-		{
-      		while (1==1)				// verstehe  ich nicht ist do im original
-      		{
-        		Serial.println("Camera capture failed");
-        		esp_camera_fb_return(fb);
-      		}
-      		return;
-    	}
-    	size_t fb_len = 0;
-    	if(fb->format != PIXFORMAT_JPEG)
-		{
-      		Serial.println("Non-JPEG data not implemented");
-      		return;
-    	}
-    	// Send image data to ESP32 server (ESP32 TFT LCD).
-    	client.sendBinary((const char*) fb->buf, fb->len);
+		auto msg = client.readBlocking();
+
+		   // log
+    Serial.print("Got Message: ");
+    Serial.println(msg.data());
+	digitalWrite(4, HIGH);
+	delay(50);	
+	digitalWrite(4, LOW);
+
+    // return echo
+    client.send("Echo: " + msg.data());
+
+}
+
+//     	// === amera captures image.
+//     	camera_fb_t *fb = NULL;
+//     	esp_err_t res = ESP_OK;
+//     	fb = esp_camera_fb_get();
+//     	if(!fb)
+// 		{
+//       		while (1==1)				// verstehe  ich nicht ist do im original
+//       		{
+//         		Serial.println("Camera capture failed");
+//         		esp_camera_fb_return(fb);
+//       		}
+//       		return;
+//     	}
+//     	size_t fb_len = 0;
+//     	if(fb->format != PIXFORMAT_JPEG)
+// 		{
+//       		Serial.println("Non-JPEG data not implemented");
+//       		return;
+//     	}
+//     	// Send image data to ESP32 server (ESP32 TFT LCD).
+//     	client.sendBinary((const char*) fb->buf, fb->len);
     
-    	esp_camera_fb_return(fb);
+//     	esp_camera_fb_return(fb);
   
-	}
+// 	}
 }

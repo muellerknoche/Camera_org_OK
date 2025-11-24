@@ -1,3 +1,11 @@
+/**
+ * Project Spion for ME with ESP32 CAM and 5" CROWPANEL
+ * 
+ * @author Rainer Müller-Knoche mk@muekno.de
+ * @date 21.11.2025 last change 
+ */
+
+
 #ifndef SDCARD_H
 #define SDCARD_H
 
@@ -72,7 +80,7 @@ void startwifi()
 		if (key == "ssid") ssid = value;
 		else if (key == "password") password = value;
 		else if (key == "ip")	localIP.fromString(value);
-		else if (key == "gateway") gateway = value;			// used for wsHost
+		else if (key == "gateway") gateway.fromString(value);
 		else if (key == "subnet") subnet.fromString(value);
 		else if (key == "pin") pin = value;
 		else if (key == "laenge") laenge = value;
@@ -90,56 +98,24 @@ void startwifi()
 		Serial.print("Pin len: ");Serial.println(laenge);
 	#endif
 
-	// Validate if all were loaded
-  	if (ssid.isEmpty() || password.isEmpty() || localIP == IPAddress(0,0,0,0) ||
-      gateway.isEmpty() || subnet == IPAddress(0,0,0,0) || password.isEmpty())
+  	// Start AP mode
+  	WiFi.mode(WIFI_AP);
+  	WiFi.softAP(ssid.c_str(), password.c_str());
+  	Serial.println("AP started with SSID: " + ssid);
+  	delay(100);  // Brief delay for AP init
+
+  	// Configure IP settings
+  	if (!WiFi.softAPConfig(localIP, gateway, subnet))
   	{
-		#ifdef DEBUG
-			Serial.println("Incomplete config, using defaults");
-			Serial.println("set defaults");
-			Serial.println(defaultSsid);
-			Serial.println(defaultPassword);
-//			Serial.println(defaultWebsockets_server_host);
-		#endif
+    	Serial.println("AP config failed");
+  	} else {
+    	Serial.println("AP config successful");
+  	}
 
-		WiFi.begin(defaultSsid,defaultPassword);
-
-  	} else {								// try with values from SD
-	
-		#ifdef DEBUG
-			Serial.println("Set Wifi to STA mode");
-		#endif
-
-		WiFi.mode(WIFI_STA);
-		WiFi.disconnect(true);
-		
-		#ifdef DEBUG
-			Serial.println(ssid);
-			Serial.println(password);
-		#endif
-
-  		WiFi.begin(ssid,password);				
-		// Wait mx 15 secondsome time to connect to wifi
-  		for(int i = 0; i < 15 && WiFi.status() != WL_CONNECTED; i++)
-		{
-      		Serial.print(".");
-      		delay(1000);
-  		}
-
-		#ifdef DEBUG
-			if (WiFi.status() == WL_CONNECTED)
-			{
-				Serial.println("WIFI CONNECTED");
-			}
-		#endif
-
-	}
+  	// Print AP IP
+  	Serial.print("AP IP address: ");
+  	Serial.println(WiFi.softAPIP());
 
 } // END startwifi
-
-
-
-
-
 
 #endif // SDCARD_H
