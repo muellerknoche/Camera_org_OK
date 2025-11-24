@@ -71,7 +71,10 @@ void setup()
 	while (!Serial) { delay(10); }					// let Serial come up
 
 	Serial.println("START SETUP");
-	startwifi();                      				// in incorrektem sd_card.h
+
+	delay(5000);
+	
+;	startwifi();                      				// in incorrektem sd_card.h
   // holt Daten von SD Card und startet WiFi
 
   //----------------------------------------Set up the ESP32-CAM camera configuration.
