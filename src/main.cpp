@@ -118,13 +118,15 @@ Serial.println("Set the camera ESP32-CAM...");
   	Serial.println("ESP32-CAM camera initialization successful.");
 
   
-  	Serial.print("Successfully connected to : ");  Serial.println(ssid);
-  	Serial.print("IP Address : ");  Serial.println(WiFi.localIP());
+//  	Serial.print("Successfully connected to : ");  Serial.println(ssid);
+//  	Serial.print("IP Address : ");  Serial.println(WiFi.localIP());
 
 
 	digitalWrite(4,HIGH);
 	delay(50);
 	digitalWrite(4,LOW);
+	Serial.println("Setup done.");
+	
 
 }
 
