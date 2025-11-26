@@ -17,11 +17,8 @@
 #include <WiFi.h>
 #include <ArduinoWebsockets.h>
 
-
 #define DEBUG
-//----------------------------------------
-
-//----------------------------------------Defines the camera GPIO (“AI Thinker” camera model).
+//Defines the camera GPIO (“AI Thinker” camera model).
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM      0
@@ -39,38 +36,29 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 //----------------------------------------
-
 // ESP32 TFT LCD (Server) Access Point.
 //const uint16_t websockets_server_port = 8888;
-
-
-
 using namespace websockets;
-
 WebsocketsServer server;
+/**
+ * @author Rainer Müller-knoche mk@muekno.de
+ * @brief Setup functions
+ * @date 26.11.2025
+ */
 void setup()
 {
-  	pinMode(4, OUTPUT);								// CAM flashlight off
-	digitalWrite(4, LOW);
-
-	Serial.begin(115200);
-
+  	pinMode(4, OUTPUT);								// init CAM  Flashlight GPIO 
+	digitalWrite(4, LOW);							// flashlight off
+	Serial.begin(115200);							// start Serial
 //	while (!Serial) { delay(10); }					// let Serial come up loop blocks
-	
-	delay(100);
-  	// holt Daten von SD Card und startet WiFi
+	delay(200);										// wait a little bit
 	startwifi();                      				// in incorrektem sd_card.h
+	server.listen(8888);							// set Websockets port
+	Serial.print("Is server live? ");	Serial.println(server.available());	// just notice
+	//-Set up the ESP32-CAM camera configuration.
+	Serial.println("Set the camera ESP32-CAM...");	// just notice
 
-	server.listen(8888);
-	Serial.print("Is server live? ");
-  	Serial.println(server.available());
-
-
-
-  //----------------------------------------Set up the ESP32-CAM camera configuration.
-Serial.println("Set the camera ESP32-CAM...");
-  
-  	camera_config_t config;
+	camera_config_t config;
   	config.ledc_channel = LEDC_CHANNEL_0;
   	config.ledc_timer = LEDC_TIMER_0;
   	config.pin_d0 = Y2_GPIO_NUM;
@@ -91,64 +79,62 @@ Serial.println("Set the camera ESP32-CAM...");
   	config.pin_reset = RESET_GPIO_NUM;
   	config.xclk_freq_hz = 20000000;
   	config.pixel_format = PIXFORMAT_JPEG;
-  
   	// init with high specs to pre-allocate larger buffers.
   	if(psramFound())
 	{
     	config.frame_size = FRAMESIZE_VGA; //--> 320x240.
     	config.jpeg_quality = 10;
     	config.fb_count = 2;
-  }
-  else
-  {
+	}
+	else
+	{
     	config.frame_size = FRAMESIZE_SVGA;
     	config.jpeg_quality = 12;
     	config.fb_count = 1;
-  }
-
+	}
   	Serial.println("ESP32-CAM camera initialization...");
   	esp_err_t err = esp_camera_init(&config);
-  	if (err != ESP_OK)
+  	if (err != ESP_OK)								// shout never occur
 	{
    	 	Serial.printf("Camera init failed with error 0x%x", err);
-    	Serial.println();
     	Serial.println("Restarting the ESP32 CAM.");
-    	delay(1000);
-    	ESP.restart();			
+		digitalWrite(4, HIGH);		// switch Flashlight on for halph a second twice
+		delay(500);					// to make failure visible
+		digitalWrite(4, LOW);
+		delay(500);
+		digitalWrite(4, HIGH);
+		delay(500);
+		digitalWrite(4, LOW);
+    	ESP.restart();				// reszart ESP now
   	}
   	Serial.println("ESP32-CAM camera initialization successful.");
-
-  
-//  	Serial.print("Successfully connected to : ");  Serial.println(ssid);
-//  	Serial.print("IP Address : ");  Serial.println(WiFi.localIP());
-
-
-	digitalWrite(4,HIGH);
-	delay(50);
+	digitalWrite(4,HIGH);			// switch on flashlight a short time
+	delay(50);						// to indicate OK
 	digitalWrite(4,LOW);
-	Serial.println("Setup done.");
-	
+	Serial.println("Setup done.");	// just notice
+} // END SETUP
 
-}
-
+/**
+ * @author Rainer Müller-Knoche mk@muekno.de
+ * @brief loop function does the work
+ * @date 26.11.2025
+ * @todo still everything
+ */
 void loop()
 {
-
-	auto client = server.accept();
+	auto client = server.accept();			// from lin example
 	if (client.available())
 	{
 		auto msg = client.readBlocking();
-
-		   // log
-    Serial.print("Got Message: ");
-    Serial.println(msg.data());
-	digitalWrite(4, HIGH);
-	delay(50);	
-	digitalWrite(4, LOW);
-
-    // return echo
-    client.send("Echo: " + msg.data());
-
+	   // log
+		Serial.print("Got Message: ");
+		Serial.println(msg.data());
+		// digitalWrite(4, HIGH);
+		// delay(50);	
+		// digitalWrite(4, LOW);
+	    // return echo
+    	client.send("Echo: " + msg.data());
+	}
 }
 
 //     	// === amera captures image.
@@ -176,4 +162,3 @@ void loop()
 //     	esp_camera_fb_return(fb);
   
 // 	}
-}
