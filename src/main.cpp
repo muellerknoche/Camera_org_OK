@@ -5,6 +5,7 @@
  * @date 09.11.2025 mk Version 1.0.0
  * @date 21.11.2025 mk Version 1.1.0
  * CAM als Websockets Server
+ * @date 26.11.2025 merged to main
  */
 
 #include <Arduino.h>
