@@ -5,7 +5,7 @@
  * CAM als Websockets Server
  * @date 26.11.2025 merged to main
  * @date 26.11.2025 mk new branch fertig_machen
- * @date 37.11.2025 just test
+ * @date 27.11.2025 just test
   */
 
 #include <Arduino.h>
