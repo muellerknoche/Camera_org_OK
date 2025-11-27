@@ -1,5 +1,3 @@
-// nochmal mit ArduinoWebsockets
-// SD Card einbauen
 /**
  * @author Rainer Müller-Knoche mk@muekno.de
  * @date 09.11.2025 mk Version 1.0.0
@@ -7,7 +5,8 @@
  * CAM als Websockets Server
  * @date 26.11.2025 merged to main
  * @date 26.11.2025 mk new branch fertig_machen
- */
+ * @date 37.11.2025 just test
+  */
 
 #include <Arduino.h>
 #include "FS.h"
