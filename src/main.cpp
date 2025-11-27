@@ -129,9 +129,9 @@ void loop()
 	   // log
 		Serial.print("Got Message: ");
 		Serial.println(msg.data());
-		// digitalWrite(4, HIGH);
-		// delay(50);	
-		// digitalWrite(4, LOW);
+		 digitalWrite(4, HIGH);
+		 delay(50);	
+		 digitalWrite(4, LOW);
 	    // return echo
     	client.send("Echo: " + msg.data());
 	}
