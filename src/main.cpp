@@ -7,6 +7,7 @@
  * CAM als Websockets Server
  * @date 26.11.2025 merged to main
  * @date 26.11.2025 mk new branch fertig_machen
+ * @date 27.11.2025 mk weiter
  */
 
 #include <Arduino.h>
@@ -42,9 +43,13 @@
 using namespace websockets;
 WebsocketsServer server;
 /**
+ * @fn stup()
  * @author Rainer Müller-knoche mk@muekno.de
- * @brief Setup functions
+ * @brief Setup functions, halp second flash 3 times indicates, somthing wrong with CAM reset
+ * @brief 1 short flash shows CAM init OK
  * @date 26.11.2025
+ * @date 27.11.2025 mk indicator CAN ok
+ * @todo indicator weebsock server up
  */
 void setup()
 {
@@ -56,7 +61,6 @@ void setup()
 	startwifi();                      				// in incorrektem sd_card.h
 	server.listen(8888);							// set Websockets port
 	Serial.print("Is server live? ");	Serial.println(server.available());	// just notice
-	//-Set up the ESP32-CAM camera configuration.
 	Serial.println("Set the camera ESP32-CAM...");	// just notice
 
 	camera_config_t config;
@@ -99,23 +103,28 @@ void setup()
 	{
    	 	Serial.printf("Camera init failed with error 0x%x", err);
     	Serial.println("Restarting the ESP32 CAM.");
-		digitalWrite(4, HIGH);		// switch Flashlight on for halph a second twice
+		digitalWrite(4, HIGH);		// switch Flashlight on for half a second 3 times
 		delay(500);					// to make failure visible
 		digitalWrite(4, LOW);
 		delay(500);
 		digitalWrite(4, HIGH);
 		delay(500);
 		digitalWrite(4, LOW);
-    	ESP.restart();				// reszart ESP now
+		delay(500);
+		digitalWrite(4, HIGH);
+		delay(500);
+		digitalWrite(4, LOW);
+    	ESP.restart();				// restart ESP now
   	}
   	Serial.println("ESP32-CAM camera initialization successful.");
 	digitalWrite(4,HIGH);			// switch on flashlight a short time
-	delay(50);						// to indicate OK
+	delay(100);						// to indicate OK
 	digitalWrite(4,LOW);
 	Serial.println("Setup done.");	// just notice
 } // END SETUP
 
 /**
+ * @fn loop()
  * @author Rainer Müller-Knoche mk@muekno.de
  * @brief loop function does the work
  * @date 26.11.2025
