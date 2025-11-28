@@ -6,6 +6,7 @@
  * @date 26.11.2025 merged to main
  * @date 26.11.2025 mk new branch fertig_machen
  * @date 27.11.2025 just test
+ * @date 28.11.2025 mk weiter
   */
 
 #include <Arduino.h>
@@ -18,6 +19,7 @@
 #include <ArduinoWebsockets.h>
 
 #define DEBUG
+
 //Defines the camera GPIO (“AI Thinker” camera model).
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
@@ -41,9 +43,30 @@
 using namespace websockets;
 WebsocketsServer server;
 /**
+ * @fn flash()
+ * @author Rainer Müller-Knoche mk@muekno.de
+ * @brief make the EP CAM flash light blink
+ * @param uint16_t flashTime Time flashlight on in ms
+ * @param uint16_t foutTime Time flashlight off in ms
+ * @param uint8_t nTimes 
+ * @date 28.11.2025 
+ */
+void flash(uint16_t flashTime, uint16_t outTime, uint8_t nTimes)
+{
+	for (uint8_t i = 0; i < nTimes;i++)
+	{
+		digitalWrite(4,HIGH);
+		delay(flashTime);
+		digitalWrite(4,LOW);
+	}
+}
+/**
+ * @fd setup()
  * @author Rainer Müller-knoche mk@muekno.de
  * @brief Setup functions
  * @date 26.11.2025
+ * @brief init all set up  websocket server listening a port 8888
+ * @date 28.11.2025 mk
  */
 void setup()
 {
@@ -57,7 +80,6 @@ void setup()
 	Serial.print("Is server live? ");	Serial.println(server.available());	// just notice
 	//-Set up the ESP32-CAM camera configuration.
 	Serial.println("Set the camera ESP32-CAM...");	// just notice
-
 	camera_config_t config;
   	config.ledc_channel = LEDC_CHANNEL_0;
   	config.ledc_timer = LEDC_TIMER_0;
@@ -98,29 +120,21 @@ void setup()
 	{
    	 	Serial.printf("Camera init failed with error 0x%x", err);
     	Serial.println("Restarting the ESP32 CAM.");
-		digitalWrite(4, HIGH);		// switch Flashlight on for halph a second twice
-		delay(500);					// to make failure visible
-		digitalWrite(4, LOW);
-		delay(500);
-		digitalWrite(4, HIGH);
-		delay(500);
-		digitalWrite(4, LOW);
-    	ESP.restart();				// reszart ESP now
+		flash(500, 500,2);			// switch Flashlight on for halph a second twice
+									// to make CAN init failure visible
+    	ESP.restart();				// restart ESP now
   	}
   	Serial.println("ESP32-CAM camera initialization successful.");
-	digitalWrite(4,HIGH);			// switch on flashlight a short time
-	delay(50);						// to indicate OK
-	digitalWrite(4,LOW);
+	flash(50,5,1);			// switch on flashlight a short time
+							// to indicate OK
 	Serial.println("Setup done.");	// just notice
 } // END SETUP
-
 /**
  * @author Rainer Müller-Knoche mk@muekno.de
  * @brief loop function does the work
  * @date 26.11.2025
- * @todo still everything
  */
-void loop()
+ void loop()
 {
 	auto client = server.accept();			// from lin example
 	if (client.available())
@@ -129,9 +143,7 @@ void loop()
 	   // log
 		Serial.print("Got Message: ");
 		Serial.println(msg.data());
-		 digitalWrite(4, HIGH);
-		 delay(50);	
-		 digitalWrite(4, LOW);
+		flash(59,5,1);						// indicate message eceived
 	    // return echo
     	client.send("Echo: " + msg.data());
 	}

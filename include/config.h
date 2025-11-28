@@ -5,20 +5,21 @@
 
 
 // Default values if SD read fails
-String defaultSsid = "ELECROW";
-String defaultPassword = "dummyPASS";               // Must be at least 8 chars for WPA2
-IPAddress defaultIP(192, 168, 4, 1);
-IPAddress defaultGateway(192, 168, 4, 1);
-IPAddress defaultSubnet(255, 255, 255, 0);
-String defaultPin = "1111";
-String defaultLaenge = "4";
-String ssid;
-String password;
-IPAddress localIP;
-IPAddress gateway;				// gateway has the same value than localIP
-IPAddress subnet;
-String pin;
-String laenge;
+extern String defaultSsid;
+extern String defaultPassword;               // Must be at least 8 chars for WPA2
+extern IPAddress defaultIP;
+extern IPAddress defaultGateway;
+extern IPAddress defaultSubnet;
+extern String defaultPin;
+extern String defaultLaenge;
+
+extern String ssid;
+extern String password;
+extern IPAddress localIP;
+extern IPAddress gateway;				    // gateway has the same value than localIP
+extern IPAddress subnet;
+extern String pin;
+extern String laenge;
 
 // SD card CS pin (adjust based on your wiring)
 //const int csPin = 10;
