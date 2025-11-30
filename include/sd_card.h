@@ -7,7 +7,7 @@
 #ifndef _2811CD_CARD_H_
 #define _2811CD_CARD_H_
 
-void startwifi();
+bool startwifi();
 
 
 #endif // _2811CD_CARD_H_

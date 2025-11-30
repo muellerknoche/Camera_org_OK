@@ -21,7 +21,7 @@ IPAddress subnet;
 String pin;
 String laenge;
 
-bool streaming = false;
+bool streaming = false;//
 // SD card CS pin (adjust based on your wiring)
 //const int csPin = 10;
 

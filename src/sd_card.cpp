@@ -32,13 +32,14 @@ String trim(String str)
  * @author Rainer Müller-Knoche  mk@muekno.de with code from the net
  * @brief Start WiFi with values from SD ard or fallback from default
  * @date 28.11.2025
+ * @date 30.11.2025 mk retun bool rein
  */
- void startwifi()
+ bool startwifi()
 {
     if (!SD_MMC.begin("/SDCARD", true))
 	{
     	Serial.println("SD Card Mount Failed");
-    	return;
+    	return false;
   	}
 	uint8_t cardType = SD_MMC.cardType();
   	if (cardType == CARD_NONE)
@@ -46,7 +47,7 @@ String trim(String str)
 		#ifdef DEBUG
 			Serial.println("No SD Card attached");
 		#endif
- 	   	return;
+ 	   	return false;
   	} else {
 		#ifdef DEBUG
     		Serial.print("Ccard Tye: ");
@@ -61,7 +62,7 @@ String trim(String str)
 			Serial.println("Failed to open file for reading");
 		#endif
 
-		return;
+		return false;
 	}
 	#ifdef DEBUG
 		Serial.println("SD card mounted");
@@ -114,11 +115,14 @@ String trim(String str)
   	{
     	Serial.println("AP config failed");
 		delay(500);
+		return false;
   	} else {
     	Serial.println("AP config successful");
   	}
   	// Print AP IP
   	Serial.print("AP IP address: ");
   	Serial.println(WiFi.softAPIP());
+
+	return true;
 
 } // END startwifi
