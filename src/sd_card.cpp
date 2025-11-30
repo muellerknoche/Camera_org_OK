@@ -57,19 +57,16 @@ String trim(String str)
   	File file = SD_MMC.open("/config.txt", FILE_READ);
   	if (!file)
   	{
-
 		#ifdef DEBUG
 			Serial.println("Failed to open file for reading");
 		#endif
 
 		return;
 	}
-
 	#ifdef DEBUG
 		Serial.println("SD card mounted");
 	#endif
-	
-	// get information from SD card
+		// get information from SD card
 	while (file.available())
   	{
       	String line = file.readStringUntil('\n');
@@ -110,13 +107,16 @@ String trim(String str)
   	delay(100);  // Brief delay for AP init
 
   	// Configure IP settings
+	Serial.print("localIP: "); Serial.print(localIP);
+	Serial.print("Gateway: "); Serial.print(gateway);
+	Serial.print("subnet: "); Serial.print(subnet);
   	if (!WiFi.softAPConfig(localIP, gateway, subnet))
   	{
     	Serial.println("AP config failed");
+		delay(500);
   	} else {
     	Serial.println("AP config successful");
   	}
-
   	// Print AP IP
   	Serial.print("AP IP address: ");
   	Serial.println(WiFi.softAPIP());

@@ -2,7 +2,7 @@
  * @author Rainer Müller-Knoche mk@muekno.de
  * @date 09.11.2025 mk Version 1.0.0
  * @date 21.11.2025 mk Version 1.1.0
- * CAM als Websockets Server
+ * CAM als Websockets socket_server
  * @date 26.11.2025 merged to main
  * @date 26.11.2025 mk new branch fertig_machen
  * @date 27.11.2025 just test
@@ -38,10 +38,11 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 //----------------------------------------
-// ESP32 TFT LCD (Server) Access Point.
-//const uint16_t websockets_server_port = 8888;
+// ESP32 TFT LCD (socket_server) Access Point.
+//const uint16_t websockets_socket_server_port = 8888;
 using namespace websockets;
-WebsocketsServer server;
+WebsocketsServer socket_server;
+camera_fb_t * fb = NULL;
 /**
  * @fn flash()
  * @author Rainer Müller-Knoche mk@muekno.de
@@ -76,8 +77,8 @@ void setup()
 //	while (!Serial) { delay(10); }					// let Serial come up loop blocks
 	delay(200);										// wait a little bit
 	startwifi();                      				// in incorrektem sd_card.h
-	server.listen(8888);							// set Websockets port
-	Serial.print("Is server live? ");	Serial.println(server.available());	// just notice
+	socket_server.listen(8888);						// set Websockets port
+	Serial.print("Is server live? ");	Serial.println(socket_server.available());	// just notice
 	//-Set up the ESP32-CAM camera configuration.
 	Serial.println("Set the camera ESP32-CAM...");	// just notice
 	camera_config_t config;
@@ -116,61 +117,73 @@ void setup()
 	}
   	Serial.println("ESP32-CAM camera initialization...");
   	esp_err_t err = esp_camera_init(&config);
-  	if (err != ESP_OK)								// shout never occur
+  	if (err != ESP_OK)										// shout never occur
 	{
    	 	Serial.printf("Camera init failed with error 0x%x", err);
     	Serial.println("Restarting the ESP32 CAM.");
-		flash(500, 500,2);			// switch Flashlight on for halph a second twice
-									// to make CAN init failure visible
-    	ESP.restart();				// restart ESP now
+		flash(500, 500,2);									// switch Flashlight on for halph a second twice
+															// to make CAN init failure visible
+    	ESP.restart();										// restart ESP now
   	}
   	Serial.println("ESP32-CAM camera initialization successful.");
-	flash(50,5,1);			// switch on flashlight a short time
-							// to indicate OK
-	Serial.println("Setup done.");	// just notice
+	flash(50,5,1);											// switch on flashlight a short time
+															// to indicate OK
+	Serial.println("Setup done.");							// just notice
 } // END SETUP
 /**
- * @author Rainer Müller-Knoche mk@muekno.de
- * @brief loop function does the work
- * @date 26.11.2025
+ * @fb callback
+ * @author GROK
+ * @brief handles message received from client
+ * @date 28.11.2025 mk
  */
- void loop()
+void handle_message(WebsocketsClient &client, WebsocketsMessage msg)
 {
-	auto client = server.accept();			// from lin example
-	if (client.available())
+	if (msg.data() == "START")
 	{
-		auto msg = client.readBlocking();
-	   // log
-		Serial.print("Got Message: ");
-		Serial.println(msg.data());
-		flash(59,5,1);						// indicate message eceived
-	    // return echo
-    	client.send("Echo: " + msg.data());
+		streaming = true;
+		client.send(("STREAMING"));
+	}
+	else if (msg.data() == "STOP")
+	{
+			streaming = false;
+			client.send("STOPPED");
 	}
 }
+/**
+ * @fb loop
+ * @author Rainer Müller-Knoche mk@muekno.de, GROK
+ * @brief loop function does the work
+ * @date 26.11.2025
+ * @date 28.11.2025 mk
+ * @date 29.11.2025 mk weiter
+ */
+ void loop()
+//Accept Websock client
+ {
+	auto client = socket_server.accept();				// from lib example
+	// Start GROK --------------------------------------------------------------
+	if (client.available())
+	{
+		client.onMessage(handle_message);
+		client.send("CONNECTED");
 
-//     	// === amera captures image.
-//     	camera_fb_t *fb = NULL;
-//     	esp_err_t res = ESP_OK;
-//     	fb = esp_camera_fb_get();
-//     	if(!fb)
-// 		{
-//       		while (1==1)				// verstehe  ich nicht ist do im original
-//       		{
-//         		Serial.println("Camera capture failed");
-//         		esp_camera_fb_return(fb);
-//       		}
-//       		return;
-//     	}
-//     	size_t fb_len = 0;
-//     	if(fb->format != PIXFORMAT_JPEG)
-// 		{
-//       		Serial.println("Non-JPEG data not implemented");
-//       		return;
-//     	}
-//     	// Send image data to ESP32 server (ESP32 TFT LCD).
-//     	client.sendBinary((const char*) fb->buf, fb->len);
-    
-//     	esp_camera_fb_return(fb);
-  
-// 	}
+		while (client.available())
+		{
+			client.poll();
+			if (streaming)
+			// Capture JPEG from camera
+			fb = esp_camera_fb_get();
+			if (!fb)
+			{
+				Serial.println("CAM capture failed");
+				continue;
+			}
+			// send JPEC as binary data over Websocket
+			client.sendBinary((const char *)fb->buf, fb->len);
+			esp_camera_fb_return(fb);
+			fb = NULL;
+			// delay to control frame rate
+			delay(50);	// 100 = 10 FPS
+		}
+	}	
+}
