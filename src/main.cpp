@@ -8,6 +8,7 @@
  * @date 27.11.2025 just test
  * @date 28.11.2025 mk weiter
  * @date 30.11.2025 mk seltsame probleme
+ * @date 03.12.2025 mk Version auf 1.2.0 gesetzt und fertig
   */
 
 #include <Arduino.h>
@@ -39,8 +40,6 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 //----------------------------------------
-// ESP32 TFT LCD (socket_server) Access Point.
-//const uint16_t websockets_socket_server_port = 8888;
 using namespace websockets;//
 WebsocketsServer socket_server;//
 camera_fb_t * fb = NULL;// bool streaming in config
@@ -69,7 +68,8 @@ void flash(uint16_t flashTime, uint16_t outTime, uint8_t nTimes)
  * @date 26.11.2025
  * @brief init all set up  websocket server listening a port 8888
  * @date 28.11.2025 mk
- * @date 30.11.2025 mk wiss nicht was los ist
+ * @date 30.11.2025 mk weiss nicht was los ist
+ * @date 03.12.2025 mk das muss jetzt ferig weden
  */
 void setup()
 {
@@ -78,10 +78,12 @@ void setup()
 	Serial.begin(115200);							// start Serial
 //	while (!Serial) { delay(10); }					// let Serial come up loop blocks
 	delay(200);										// wait a little bit
-	if (!startwifi())                  				// in incorrektem sd_card.h
+	Serial.println();
+	Serial.println("03.12.2025 Ver 1.2.0 mk");
+	Serial.println();
+	if (!startwifi())                  				// in correktem sd_card.cpp
 	{
-		Serial.println("WiFi FAILED");
-		flash(500, 500,5);	
+		Serial.println("WiFi FAILED");				// dürfte nie vorkommen
 	}
 	else
 	{
@@ -147,15 +149,17 @@ void setup()
 	 */
 	void handle_message(WebsocketsClient &client, WebsocketsMessage msg)
 	{
-		if (msg.data() == "START")
+		if (msg.data() == "stream_on")
 		{
 			streaming = true;
 			client.send(("STREAMING"));
+			Serial.println("STREAM ON");
 		}
 		else if (msg.data() == "STOP")
 		{
-				streaming = false;
-				client.send("STOPPED");
+			streaming = false;
+			client.send("STOPPED");
+			Serial.println("STREAM OFF");
 		}
 	}
 
@@ -181,19 +185,21 @@ void setup()
 			{
 				client.poll();
 				if (streaming)
-				// Capture JPEG from camera
-				fb = esp_camera_fb_get();
-				if (!fb)
 				{
-					Serial.println("CAM capture failed");
-					continue;
+					// Capture JPEG from camera
+					fb = esp_camera_fb_get();
+					if (!fb)
+					{
+						Serial.println("CAM capture failed");
+						continue;
+					}
+					// send JPEC as binary data over Websocket
+					client.sendBinary((const char *)fb->buf, fb->len);
+					esp_camera_fb_return(fb);
+					fb = NULL;
+					// delay to control frame rate
+					//delay(50);	// 100 = 10 FPS
 				}
-				// send JPEC as binary data over Websocket
-				client.sendBinary((const char *)fb->buf, fb->len);
-				esp_camera_fb_return(fb);
-				fb = NULL;
-				// delay to control frame rate
-				delay(50);	// 100 = 10 FPS
 			}
 		}	
 }
